@@ -10,13 +10,13 @@ import numpy as np
 
 def CrossChannelNormalization(k=2, n=5, alpha=1e-4, beta=0.75):
     def f(X):
-        _, R, C, CH = X.shape.as_list()
+        num_channels = X.shape.as_list()[-1]
         half = n // 2
         squared = K.square(X)
         scales = []
-        for i in range(CH):
+        for i in range(num_channels):
             ch_from = max(0, i - half)
-            ch_to = min(CH, i + half)
+            ch_to = min(num_channels, i + half)
             squared_sum = (k + alpha * K.sum(squared[:, :, :, ch_from:ch_to], axis=-1)) ** beta
             scales.append(squared_sum)
 
