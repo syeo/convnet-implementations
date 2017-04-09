@@ -13,22 +13,25 @@ def CrossChannelNormalization(k=2, n=5, alpha=1e-4, beta=0.75):
         _, R, C, CH = X.shape.as_list()
         half = n // 2
         squared = K.square(X)
-        squared_sums = []
+        scales = []
         for i in range(CH):
             ch_from = max(0, i - half)
             ch_to = min(CH, i + half)
             squared_sum = (k + alpha * K.sum(squared[:, :, :, ch_from:ch_to], axis=-1)) ** beta
-            squared_sums.append(squared_sum)
+            scales.append(squared_sum)
 
-        scale = K.stack(squared_sums, axis=-1)
+        scale = K.stack(scales, axis=-1)
         return X / scale
 
     return Lambda(f)
 
 
-def SplitTensor(ratio_split, id_split):
+def SplitTensor(num_splits, id_split):
     def f(X):
-        div = X.shape.as_list()[-1] // ratio_split
+        assert X.shape.as_list()[-1] % num_splits == 0
+
+        div = X.shape.as_list()[-1] // num_splits
+
         start = id_split * div
         end = start + div
 
