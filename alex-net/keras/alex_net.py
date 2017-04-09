@@ -26,33 +26,17 @@ def CrossChannelNormalization(k=2, n=5, alpha=1e-4, beta=0.75):
     return Lambda(f)
 
 
-def SplitTensor(num_splits, id_split):
-    def f(X):
-        assert X.shape.as_list()[-1] % num_splits == 0
-
-        div = X.shape.as_list()[-1] // num_splits
-
-        start = id_split * div
-        end = start + div
-
-        return X[:, :, :, start:end]
-
-    return Lambda(f)
-
-
 def get_second_layer_output(input_tensor):
-    processed_input_tensor = Conv2D(96, (11, 11), strides=(4, 4), activation='relu', input_shape=(227, 227, 3))(input_tensor)
-
     return (
-        SplitTensor(2, 0)(processed_input_tensor),
-        SplitTensor(2, 1)(processed_input_tensor),
+        Conv2D(48, (11, 11), strides=(4, 4), activation='relu', input_shape=(227, 227, 3))(input_tensor),
+        Conv2D(48, (11, 11), strides=(4, 4), activation='relu', input_shape=(227, 227, 3))(input_tensor),
     )
 
 
 def get_third_layer_output(input_tensors):
     output_tensors = []
 
-    for (index, input_tensor) in enumerate(input_tensors):
+    for input_tensor in input_tensors:
         processed_input_tensor = MaxPooling2D((3, 3), (2, 2))(input_tensor)
         processed_input_tensor = CrossChannelNormalization()(processed_input_tensor)
         processed_input_tensor = ZeroPadding2D((2, 2))(processed_input_tensor)
@@ -126,10 +110,10 @@ def make_model():
 
     result = inputs
 
-    for (index, layer_func) in enumerate(layer_funcs):
+    for layer_func in layer_funcs:
         result = layer_func(result)
 
-    return Model(inputs=inputs, outputs=[result])
+    return Model(inputs=inputs, outputs=result)
 
 
 if __name__ == '__main__':
